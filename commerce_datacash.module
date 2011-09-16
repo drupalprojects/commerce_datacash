@@ -1,0 +1,233 @@
+<?php
+
+/**
+ * @file
+ * Implements Datacash payment gateway (www.datacash.com) for use in Drupal Commerce.
+ */
+
+/**
+ * Implements hook_commerce_payment_method_info().
+ *
+ * This hook will define the Ogone payment method.
+ */
+function commerce_datacash_commerce_payment_method_info() {
+  $payment_methods = array();
+
+  $payment_methods['datacash'] = array(
+    'base' => 'commerce_datacash',
+    'title' => t('Datacash'),
+    'short_title' => t('Datacash'),
+    'display_title' => t('Datacash'),
+    'description' => t('Integrates Datacash payment system'),
+    'terminal' => FALSE,
+    'offsite' => TRUE,
+    'offsite_autoredirect' => TRUE,
+  );
+
+  return $payment_methods;
+}
+
+/**
+ * Payment method callback: settings form.
+ *
+ * Returns form elements for the payment methods settings form included
+ * as part of the payment methods enabling action in Rules
+ */
+function commerce_datacash_settings_form($settings = NULL) {
+  $form = array();
+
+  $settings = (array) $settings + array(
+    'datacash_client' => '',
+    'datacash_password' => '',
+  );
+
+  $form['datacash_client'] = array(
+    '#type' => 'textfield',
+    '#required' => TRUE,
+    '#title' => t('Datacash client.'),
+    '#default_value' => $settings['datacash_client'],
+  );
+
+  $form['datacash_password'] = array(
+    '#type' => 'textfield',
+    '#required' => TRUE,
+    '#title' => t('Datacash password.'),
+    '#default_value' => $settings['datacash_password'],
+  );
+
+  $form['datacash_server_prefix'] = array(
+    '#type' => 'radios',
+    '#required' => TRUE,
+    '#title' => t('Test or Production server.'),
+    // @see https://datacash.custhelp.com/cgi-bin/datacash.cfg/php/enduser/std_adp.php?p_faqid=57
+    '#options' => array('testserver.' => t('Testing'), 'mars.transaction.' => t('Production')),
+    '#default_value' => $settings['datacash_server_prefix'],
+  );
+
+  return $form;
+}
+
+/**
+ * Payment method callback: redirect form.
+ *
+ * Form that redirects user to Datacash system.
+ */
+function commerce_datacash_redirect_form($form, &$form_state, $order, $payment_method) {
+  // Get financial info
+  $order_wrapper = entity_metadata_wrapper('commerce_order', $order);
+
+  $amount = $order_wrapper->commerce_order_total->amount->value();
+  $currency_code = $order_wrapper->commerce_order_total->currency_code->value();
+
+  // Chamge amount because of decimals.
+  $currency = commerce_currency_load($currency_code);
+  if ($currency['decimals'] > 0) {
+    $amount = $amount / pow(10, $currency['decimals']);
+  }
+
+  $return_url = url('checkout/' . $order->order_id . '/payment/return/' . $order->data['payment_redirect_key'], array('absolute' => TRUE));
+
+  $settings = $payment_method['settings'];
+  global $base_url;
+  $datacash_open_session_arguments = array(
+    'order_id' => $order->order_id,
+    'order_currency_code' => $currency_code,
+    'order_amount' => $amount,
+    'return_url' => $return_url,
+    'datacash_client' => $settings['datacash_client'],
+    'datacash_password' => $settings['datacash_password'],
+    'datacash_server_prefix' => $settings['datacash_server_prefix'],
+    'merchant_url' => $base_url,
+  );
+  drupal_alter('commerce_datacash_open_session_arguments', $datacash_open_session_arguments, $order);
+
+  try {
+    module_load_include('inc', 'commerce_datacash', 'commerce_datacash.helpers');
+    // We use @ because of Notices of Datacash library.
+    $datacash_response = @commerce_datacash_setup_session($datacash_open_session_arguments);
+    if (!$datacash_response) {
+      drupal_set_message(t('Cannot start session with Datacash. Please try later.'), 'error');
+      return $form;
+    }
+  }
+  catch (Exception $e) {
+    drupal_set_message(t('Cannot start DataCash session. Please contact site administrator.', 'error'));
+    watchdog('commerce_datacash', 'Cannot start DataCash session.', array(), WATCHDOG_ERROR);
+    watchdog('commerce_datacash', var_export($e, TRUE), array(), WATCHDOG_ERROR);
+    return $form;
+  }
+
+  $form['submit'] = array(
+    '#type' => 'submit',
+    '#value' => t('Proceed with payment'),
+  );
+
+  // Redirect to Datacash page.
+  $url = 'https://' . $settings['datacash_server_prefix'] . 'datacash.com/hps/?HPS_SessionID=' . $datacash_response['session_id'];
+  $form['#action'] = $url;
+
+  return $form;
+}
+
+/**
+ * Implements hook_redirect_form_validate().
+ */
+function commerce_datacash_redirect_form_validate($order, $payment_method) {
+  if (isset($_GET['dts_reference'])) {
+
+    $datacash_query_arguments = array(
+      'datacash_reference' => (int) $_GET['dts_reference'],
+      'datacash_server_prefix' => $payment_method['settings']['datacash_server_prefix'],
+    );
+
+    try {
+      module_load_include('inc', 'commerce_datacash', 'commerce_datacash.helpers');
+      // We use @ because of Notices of Datacash library.
+      $datacash_payment_status = @commerce_datacash_payment_status($datacash_query_arguments);
+    }
+    catch (Exception $e) {
+      drupal_set_message(t('Cannot get payment status from Datacash. Please contact site administrator.', 'error'));
+      watchdog('commerce_datacash', 'Cannot get payment status from Datacash.', array(), WATCHDOG_ERROR);
+      watchdog('commerce_datacash', var_export($e, TRUE), array(), WATCHDOG_ERROR);
+      return $form;
+    }
+
+    // Alter Datacash payment status.
+    drupal_alter('commerce_datacash_payment_status', $datacash_payment_status, $order, $payment_method);
+
+    if (!is_array($datacash_payment_status)) {
+      watchdog('commerce_datacash', 'Error in call to Datacash.', array(), WATCHDOG_ERROR);
+      return FALSE;
+    }
+
+    // Process the transaction based on the Datacash payment status.
+    commerce_datacash_process_transaction($order, $payment_method, $datacash_payment_status);
+    return TRUE;
+  }
+  else {
+    watchdog('commerce_datacash', 'No Datacash session_id (dts) found', array(), WATCHDOG_ERROR);
+    return FALSE;
+  }
+}
+
+/**
+ * Process the payment transaction with the info received from Ogone
+ *
+ * @param $order
+ *   The loaded order that is being processed
+ * @param $payment_method
+ *   The payment method settings
+ * @param $feedback
+ *   The parameters received from Ogone regarding the payment
+ */
+function commerce_datacash_process_transaction($order, $payment_method, $feedback) {
+  $transaction = commerce_payment_transaction_new('datacash', $order->order_id);
+  $payment_status = commerce_datacash_feedback_status($feedback['status']);
+
+  // Identifying data.
+  $transaction->instance_id = $payment_method['instance_id'];
+  $transaction->remote_id = $feedback['datacash_reference'];
+
+  // Payment amount details.
+  $transaction->amount = $order->commerce_order_total[LANGUAGE_NONE][0]['amount'];
+  $transaction->currency_code = $order->commerce_order_total[LANGUAGE_NONE][0]['currency_code'];
+
+  // Payment status.
+  $transaction->remote_status = $feedback['status'];
+  $transaction->status = $payment_status['code'];
+  $transaction->message = $payment_status['message'];
+  commerce_payment_transaction_save($transaction);
+}
+
+/**
+ * Get a payment status and message based on Datacash status ID.
+ *
+ * @param int $status
+ *   received Datacash status ID
+ * @return array
+ *   key 'code' contains the commerce status.
+ *   key 'message' contains a textual representation of the Datacash status ID.
+ *
+ * @see https://testserver.datacash.com/software/returncodes.shtml#General
+ */
+function commerce_datacash_feedback_status($status) {
+  switch ($status) {
+    /** SUCCESS **/
+    case 1:  // Success
+      $st = COMMERCE_PAYMENT_STATUS_SUCCESS;
+      $msg = t('Success');
+      break;
+
+    /** FAILURE **/
+    default:
+      module_load_include('inc', 'commerce_datacash', 'commerce_datacash.error_codes');
+      $st = COMMERCE_PAYMENT_STATUS_FAILURE;
+      $msg = commerce_datacash_get_error_message($status);
+      // Set default message if response code is unknown.
+      $msg = (!empty($msg)) ? t($msg) : t('Unknown response status code.');
+  }
+  return array(
+    'code' => $st,
+    'message' => $msg,
+  );
+}
