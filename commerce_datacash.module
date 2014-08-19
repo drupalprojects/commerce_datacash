@@ -40,7 +40,8 @@ function commerce_datacash_settings_form($settings = NULL) {
     'datacash_client' => '',
     'datacash_password' => '',
     'datacash_merchant_reference_prefix' => '',
-    'datacash_server_prefix' => 'testserver.',
+    'datacash_server_prefix' => '',
+    'datacash_template_id' => '0',
   );
 
   $form['datacash_client'] = array(
@@ -71,6 +72,14 @@ function commerce_datacash_settings_form($settings = NULL) {
     // @see https://datacash.custhelp.com/cgi-bin/datacash.cfg/php/enduser/std_adp.php?p_faqid=57
     '#options' => array('testserver.' => t('Testing'), 'mars.transaction.' => t('Production')),
     '#default_value' => $settings['datacash_server_prefix'],
+  );
+  
+  $form['datacash_template_id'] = array(
+    '#type' => 'textfield',
+    '#title' => t('Datacash template ID.'),
+    '#description' => t('You can request a new template by contacting DataCash team.'),
+    '#required' => FALSE,
+    '#default_value' => $settings['datacash_template_id'],
   );
 
   return $form;
@@ -107,6 +116,7 @@ function commerce_datacash_redirect_form($form, &$form_state, $order, $payment_m
     'datacash_password' => $settings['datacash_password'],
     'datacash_server_prefix' => $settings['datacash_server_prefix'],
     'datacash_merchant_reference_prefix' => $settings['datacash_merchant_reference_prefix'],
+    'datacash_template_id' => $settings['datacash_template_id'],
     'merchant_url' => $base_url,
   );
   drupal_alter('commerce_datacash_open_session_arguments', $datacash_open_session_arguments, $order);
@@ -144,12 +154,16 @@ function commerce_datacash_redirect_form($form, &$form_state, $order, $payment_m
  */
 function commerce_datacash_redirect_form_validate($order, $payment_method) {
   if (isset($_GET['dts_reference'])) {
-
+    
+    $settings = $payment_method['settings'];
+    
     $datacash_query_arguments = array(
       'datacash_reference' => (int) $_GET['dts_reference'],
       'datacash_server_prefix' => $payment_method['settings']['datacash_server_prefix'],
+      'datacash_client' => $settings['datacash_client'],
+      'datacash_password' => $settings['datacash_password'],
     );
-
+    
     try {
       module_load_include('inc', 'commerce_datacash', 'commerce_datacash.helpers');
       // We use @ because of Notices of Datacash library.

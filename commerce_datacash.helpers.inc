@@ -43,7 +43,7 @@ function commerce_datacash_setup_session($arguments) {
   $send_doc->set( "Request.Transaction.TxnDetails.ThreeDSecure.Browser.user_agent", '<![CDATA[' . $_SERVER['HTTP_USER_AGENT'] . ']]>');
   $send_doc->set( "Request.Transaction.CardTxn.method", "auth");
   $send_doc->set( "Request.Transaction.HpsTxn.method", 'setup_full');
-  $send_doc->set( "Request.Transaction.HpsTxn.page_set_id", '180');
+  $send_doc->set( "Request.Transaction.HpsTxn.page_set_id", $datacash_template_id);
   $send_doc->set( "Request.Transaction.HpsTxn.return_url", '<![CDATA[' . $return_url . ']]>');
 
   $agent = new DataCash_SSLAgent( $config );
@@ -88,8 +88,8 @@ function commerce_datacash_payment_status($arguments) {
 
   $send_doc = new DataCash_Document("Request");
 
-  $send_doc->set( "Request.Authentication.client", variable_get('datacash_client', '99213700'));
-  $send_doc->set( "Request.Authentication.password", variable_get('datacash_password', '5EXEtc97q'));
+  $send_doc->set( "Request.Authentication.client", variable_get('datacash_client', $datacash_client));
+  $send_doc->set( "Request.Authentication.password", variable_get('datacash_password', $datacash_password));
   $send_doc->set( "Request.Transaction.HistoricTxn.method", 'query');
   $send_doc->set( "Request.Transaction.HistoricTxn.reference", $datacash_reference);
 
