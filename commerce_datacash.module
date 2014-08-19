@@ -39,6 +39,8 @@ function commerce_datacash_settings_form($settings = NULL) {
   $settings = (array) $settings + array(
     'datacash_client' => '',
     'datacash_password' => '',
+    'datacash_merchant_reference_prefix' => '',
+    'datacash_server_prefix' => 'testserver.',
   );
 
   $form['datacash_client'] = array(
@@ -53,6 +55,13 @@ function commerce_datacash_settings_form($settings = NULL) {
     '#required' => TRUE,
     '#title' => t('Datacash password.'),
     '#default_value' => $settings['datacash_password'],
+  );
+  
+  $form['datacash_merchant_reference_prefix'] = array(
+    '#type' => 'textfield',
+    '#required' => FALSE,
+    '#title' => t('Datacash merchant reference prefix.'),
+    '#default_value' => $settings['datacash_merchant_reference_prefix'],
   );
 
   $form['datacash_server_prefix'] = array(
@@ -97,6 +106,7 @@ function commerce_datacash_redirect_form($form, &$form_state, $order, $payment_m
     'datacash_client' => $settings['datacash_client'],
     'datacash_password' => $settings['datacash_password'],
     'datacash_server_prefix' => $settings['datacash_server_prefix'],
+    'datacash_merchant_reference_prefix' => $settings['datacash_merchant_reference_prefix'],
     'merchant_url' => $base_url,
   );
   drupal_alter('commerce_datacash_open_session_arguments', $datacash_open_session_arguments, $order);

@@ -33,7 +33,7 @@ function commerce_datacash_setup_session($arguments) {
   $send_doc->set( "Request.Authentication.client", $datacash_client);
   $send_doc->set( "Request.Authentication.password", $datacash_password);
   $send_doc->set( "Request.Transaction.TxnDetails.amount", $order_amount, array('currency' => $order_currency_code));
-  $send_doc->set( "Request.Transaction.TxnDetails.merchantreference", $order_id);
+  $send_doc->set( "Request.Transaction.TxnDetails.merchantreference", $datacash_merchant_reference_prefix . $order_id);
   $send_doc->set( "Request.Transaction.TxnDetails.ThreeDSecure.verify", 'yes');
   $send_doc->set( "Request.Transaction.TxnDetails.ThreeDSecure.merchant_url", $merchant_url);
   $send_doc->set( "Request.Transaction.TxnDetails.ThreeDSecure.purchase_datetime", date('Ymd G:i:s'));
