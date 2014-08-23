@@ -173,7 +173,7 @@ function commerce_datacash_redirect_form_validate($order, $payment_method) {
       drupal_set_message(t('Cannot get payment status from Datacash. Please contact site administrator.', 'error'));
       watchdog('commerce_datacash', 'Cannot get payment status from Datacash.', array(), WATCHDOG_ERROR);
       watchdog('commerce_datacash', var_export($e, TRUE), array(), WATCHDOG_ERROR);
-      return $form;
+      return FALSE;
     }
 
     // Alter Datacash payment status.
