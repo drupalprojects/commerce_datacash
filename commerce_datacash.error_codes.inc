@@ -1,12 +1,12 @@
 <?php
-
 /**
+ * @file
  * List of all error messages for Datacash response.
  *
  * @see https://testserver.datacash.com/software/returncodes.shtml#General
  */
 function commerce_datacash_get_error_message($status) {
-  $error_messages = array (
+  $error_messages = array(
     2 => 'Socket write error',
     3 => 'Timeout',
     5 => 'Edit error',
