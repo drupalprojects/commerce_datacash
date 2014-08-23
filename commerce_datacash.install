@@ -1,17 +1,20 @@
 <?php
+/**
+ * @file
+ * Install scripts for commerce_datacash module.
+ */
 
 /**
  * Implements hook_requirements().
  */
 function commerce_datacash_requirements($phase) {
   $requirements = array();
-  
+
   if ($phase == 'install') {
     $target_filename = drupal_get_path('module', 'commerce_datacash') . '/DataCash-PHP-XMLAPI/lib/DataCash.php';
-    
+
     if (!file_exists($target_filename)) {
       $t = get_t();
-      
       $requirements['datacash_php_xml_library'] = array(
         'title' => $t("DataCash XMLAPI library not found."),
         'description' => t("Commerce Datacash module could not be enabled."),
@@ -26,6 +29,5 @@ function commerce_datacash_requirements($phase) {
       );
     }
   }
-  
   return $requirements;
 }
