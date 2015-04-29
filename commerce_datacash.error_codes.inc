@@ -3,6 +3,9 @@
  * @file
  * List of all error messages for Datacash response.
  *
+ * @return string
+ *   Message of the code.
+ *
  * @see https://testserver.datacash.com/software/returncodes.shtml#General
  */
 function commerce_datacash_get_error_message($status) {

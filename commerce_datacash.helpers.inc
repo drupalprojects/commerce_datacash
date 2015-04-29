@@ -3,6 +3,10 @@
 /**
  * @file
  * Set up session with DataCash.
+ */
+
+/**
+ * Setup settion.
  *
  * @param array $arguments
  *   key 'order_id' -- unique id of the transaction.
@@ -15,6 +19,9 @@
  *   key 'datacash_server_prefix' -- prefix of the Datacash URL
  *     to communicate with.
  *   key 'merchant_url' -- URL of our shop.
+ *
+ * @return array
+ *   Session ID and datacashe reference.
  */
 function commerce_datacash_setup_session($arguments) {
   // Extract arguments.
@@ -74,6 +81,9 @@ function commerce_datacash_setup_session($arguments) {
  *   key 'datacash_reference' -- reference of the Datacash about transaction
  *   key 'datacash_server_prefix' -- prefix of the Datacash server
  *     (testing or production).
+ *
+ * @return array
+ *   Status, datacashe reference and merchant reference.
  */
 function commerce_datacash_payment_status($arguments) {
   // Extract arguments.
@@ -119,6 +129,12 @@ function commerce_datacash_payment_status($arguments) {
  * Prepare configuration string for datacash library.
  *
  * No need for logging.
+ *
+ * @param string $host
+ *   Host.
+ *
+ * @return string
+ *   Configuration string.
  */
 function commerce_datacash_configuration_string($host) {
   return '

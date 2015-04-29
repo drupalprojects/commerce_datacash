@@ -10,10 +10,12 @@
  * Implements hook_commerce_payment_method_info().
  *
  * This hook will define the Ogone payment method.
+ *
+ * @return array
+ *   Payment method.
  */
 function commerce_datacash_commerce_payment_method_info() {
   $payment_methods = array();
-
   $payment_methods['datacash'] = array(
     'base' => 'commerce_datacash',
     'title' => t('Datacash'),
@@ -36,10 +38,11 @@ function commerce_datacash_commerce_payment_method_info() {
  *
  * @param array $settings
  *   Settings of form.
+ *
+ * @return array
+ *   Settings form.
  */
 function commerce_datacash_settings_form($settings = NULL) {
-  $form = array();
-
   $settings = (array) $settings + array(
       'datacash_client' => '',
       'datacash_password' => '',
@@ -68,7 +71,7 @@ function commerce_datacash_settings_form($settings = NULL) {
     '#title' => t('Datacash merchant reference prefix.'),
     '#default_value' => $settings['datacash_merchant_reference_prefix'],
   );
-  
+
   // @see https://datacash.custhelp.com/cgi-bin/datacash.cfg/php/enduser/std_adp.php?p_faqid=57.
   $form['datacash_server_prefix'] = array(
     '#type' => 'radios',
@@ -105,6 +108,9 @@ function commerce_datacash_settings_form($settings = NULL) {
  *   Orger object.
  * @param array $payment_method
  *   Payment method settings.
+ *
+ * @return array
+ *   Form.
  */
 function commerce_datacash_redirect_form($form, &$form_state, $order, $payment_method) {
   // Get financial info.
