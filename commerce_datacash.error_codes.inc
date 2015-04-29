@@ -1,7 +1,14 @@
 <?php
 /**
  * @file
+ * List of all error messages.
+ */
+
+/**
  * List of all error messages for Datacash response.
+ *
+ * @param $status
+ *   Status.
  *
  * @return string
  *   Message of the code.

@@ -6,19 +6,19 @@
  */
 
 /**
- * Setup settion.
+ * Setup settings.
  *
  * @param array $arguments
- *   key 'order_id' -- unique id of the transaction.
- *   key 'order_currency_code' -- code of the currency (USD, GBP etc.).
- *   key 'order_amount' -- amount of transaction.
- *   key 'return_url' -- URL of the return callback
+ *   Key 'order_id' -- unique id of the transaction.
+ *   Key 'order_currency_code' -- code of the currency (USD, GBP etc.).
+ *   Key 'order_amount' -- amount of transaction.
+ *   Key 'return_url' -- URL of the return callback
  *    (where Datacash should redirect user after payment).
- *   key 'datacash_client' -- login of the client in Datacash.
- *   key 'datacash_password' -- password of the client in Datacash.
- *   key 'datacash_server_prefix' -- prefix of the Datacash URL
+ *   Key 'datacash_client' -- login of the client in Datacash.
+ *   Key 'datacash_password' -- password of the client in Datacash.
+ *   Key 'datacash_server_prefix' -- prefix of the Datacash URL
  *     to communicate with.
- *   key 'merchant_url' -- URL of our shop.
+ *   Key 'merchant_url' -- URL of our shop.
  *
  * @return array
  *   Session ID and datacashe reference.
