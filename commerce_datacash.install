@@ -17,7 +17,7 @@ function commerce_datacash_requirements($phase) {
       $t = get_t();
       $requirements['datacash_php_xml_library'] = array(
         'title' => $t("DataCash XMLAPI library not found."),
-        'description' => t("Commerce Datacash module could not be enabled."),
+        'description' => $t("Commerce Datacash module could not be enabled."),
         'value' => $t("Download the Datacash PHP library from site !link to module's folder. "
           . "Rename the library name to DataCash-PHP-XMLAPI. "
           . "So the structure of the commerce_datacash module folder will be.",

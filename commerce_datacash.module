@@ -2,7 +2,7 @@
 
 /**
  * @file
- * Commerce Datacash
+ * Commerce Datacash.
  *
  * Implements Datacash payment gateway (www.datacash.com) for use
  * in Drupal Commerce.
